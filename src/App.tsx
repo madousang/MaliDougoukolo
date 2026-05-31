@@ -38,7 +38,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               className="text-white font-bold text-xl tracking-tight"
             >
-              SiraFoncier
+              Registre Foncier
             </motion.span>
           )}
         </div>
