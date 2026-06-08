@@ -97,8 +97,8 @@ export default function App() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex flex-col text-right mr-3 hidden sm:flex">
-                <span className="text-sm font-medium">Bacar Toure</span>
-                <span className="text-xs text-gray-500">Agent Foncier (Mali)</span>
+                <span className="text-sm font-medium">Mamadou SANGARE</span>
+                <span className="text-xs text-gray-500">Agent Foncier</span>
             </div>
             <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
               <UserIcon size={20} />
