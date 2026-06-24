@@ -11,7 +11,8 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  role      String   @default("CITOYEN") // CITOYEN, ADMIN_FONCIER, NOTAIRE, CHEF_COUTUMIER
+  password  String
+  role      String   @default("CITOYEN") // CITOYEN, SUPER_ADMIN, AGENT_FONCIER, NOTAIRE, CHEF_COUTUMIER
   address   String?  @unique // Blockchain wallet address
   createdAt DateTime @default(now())
   parcels   Parcel[]

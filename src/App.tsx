@@ -1,24 +1,44 @@
 import { useState, useEffect } from "react";
 import { 
   Shield, 
+  Mail, 
+  Eye,
+  EyeOff,
   Map as MapIcon, 
   PlusCircle, 
   Search, 
   User as UserIcon, 
   History, 
   FileText,
+  UserRoundCheckIcon, 
   Menu,
   X,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  LockKeyhole,
+  LogIn,
+  LogOut
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 type View = "dashboard" | "map" | "register" | "verify";
+type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+};
+
+const formatRole = (role: string) => role.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+
+  if (!currentUser) {
+    return <LoginView onLogin={setCurrentUser} />;
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
@@ -97,12 +117,20 @@ export default function App() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex flex-col text-right mr-3 hidden sm:flex">
-                <span className="text-sm font-medium">Mamadou SANGARE</span>
-                <span className="text-xs text-gray-500">Agent Foncier</span>
+                <span className="text-sm font-medium">{currentUser.name ?? currentUser.email}</span>
+                <span className="text-xs text-gray-500">{formatRole(currentUser.role)}</span>
             </div>
             <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
               <UserIcon size={20} />
             </div>
+            <button
+              onClick={() => setCurrentUser(null)}
+              className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-colors"
+              aria-label="Se déconnecter"
+              title="Se déconnecter"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </header>
 
@@ -114,6 +142,220 @@ export default function App() {
             {activeView === "verify" && <VerifyView key="verify" />}
           </AnimatePresence>
         </div>
+      </main>
+    </div>
+  );
+}
+
+function LoginView({ onLogin }: { onLogin: (user: AuthUser) => void }) {
+  const [userId, setUserId] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setLoading] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, name, email, password }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Identifiant ou mot de passe invalide.");
+      }
+
+      onLogin(result.user);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Connexion impossible.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white flex overflow-hidden">
+      <div className="hidden lg:flex lg:w-[46%] relative bg-slate-900">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(79,70,229,0.38),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(15,23,42,0.76))]" />
+        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+        <div className="relative z-10 p-12 flex flex-col justify-between w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <Shield className="w-7 h-7" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">Registre Foncier</p>
+              <p className="text-sm text-indigo-100">Plateforme institutionnelle</p>
+            </div>
+          </div>
+
+          <div className="max-w-md">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-sm text-indigo-100 mb-6">
+              <CheckCircle2 size={16} />
+              Accès sécurisé au tableau de bord
+            </div>
+            <h1 className="text-4xl font-bold leading-tight">
+              Sécurisez les titres fonciers du Mali avec une traçabilité immuable.
+            </h1>
+            <p className="text-slate-300 mt-5 leading-7">
+              Connectez-vous pour consulter les activités, vérifier les titres et enregistrer de nouvelles parcelles dans le registre.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-2xl font-bold">12.8k</p>
+              <p className="text-slate-300 mt-1">Titres</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-2xl font-bold">452</p>
+              <p className="text-slate-300 mt-1">Transactions</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-2xl font-bold">24/7</p>
+              <p className="text-slate-300 mt-1">Contrôle</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-gray-50 text-gray-900">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <div className="w-11 h-11 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">Registre Foncier</p>
+              <p className="text-sm text-gray-500">Accès sécurisé</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-xl shadow-slate-200/60 p-8">
+            <div className="mb-8">
+              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-5">
+                <LockKeyhole size={24} />
+              </div>
+              <h2 className="text-2xl font-bold">Connexion</h2>
+              <p className="text-gray-500 text-sm mt-2">
+                Entrez vos identifiants pour acceder à votre compte.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold mb-2" htmlFor="name">
+                  Nom complet
+                </label>
+                <div className="relative">
+                  <UserIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    placeholder="Mira KOUMA"
+                    autoComplete="name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2" htmlFor="email">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    placeholder="jean@registre.ml"
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2" htmlFor="userId">
+                  ID utilisateur
+                </label>
+                <div className="relative">
+                  <UserRoundCheckIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="userId"
+                    type="text"
+                    value={userId}
+                    onChange={(event) => setUserId(event.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    placeholder="rôle: admin ou agent"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2" htmlFor="password">
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <LockKeyhole size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    placeholder="Votre mot de passe"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-indigo-600"
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {errorMessage && (
+                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {errorMessage}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:bg-indigo-400"
+              >
+                {isLoading ? "Vérification..." : "Accéder à la page d'accueil"}
+                <LogIn size={18} />
+              </button>
+            </form>
+          </div>
+        </motion.div>
       </main>
     </div>
   );
@@ -310,4 +552,3 @@ function VerifyView() {
         </motion.div>
     );
 }
-
